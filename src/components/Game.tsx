@@ -118,8 +118,14 @@ const Game: React.FC<GameProps> = ({ isHost }) => {
     return () => clearInterval(timer);
   }, [isRoundActive, timeLeft]);
 
+  if (!username) {
+    return <UserRegistration onRegister={handleRegister} />;
+  }
+
   return (
     <GameContainer>
+      <ScoreDisplay username={username} score={score} />
+      
       <Typography variant="h4" gutterBottom align="center">
         Country Outline Game
       </Typography>
