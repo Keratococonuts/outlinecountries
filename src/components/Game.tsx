@@ -4,6 +4,7 @@ import { styled } from '@mui/material/styles';
 import CountryOutline from './CountryOutline';
 import UserRegistration from './UserRegistration';
 import ScoreDisplay from './ScoreDisplay';
+import { supabase, Score } from '../lib/supabase';
 
 const GameContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -63,24 +64,45 @@ const Game: React.FC<GameProps> = ({ isHost }) => {
     setIsRoundActive(true);
   };
 
-  const handleOptionClick = (option: Country) => {
-    if (!isRoundActive) return;
+  const handleOptionClick = async (option: Country) => {
+    if (!isRoundActive || !username) return;
     
     const isCorrect = option.name === currentCountry?.name;
     if (isCorrect) {
-      setScore(prev => prev + 1);
-      // Save score to localStorage
-      localStorage.setItem(`score_${username}`, (score + 1).toString());
+      const newScore = score + 1;
+      setScore(newScore);
+      
+      // Update score in Supabase
+      const { error } = await supabase
+        .from('scores')
+        .upsert({
+          username,
+          score: newScore,
+        }, {
+          onConflict: 'username'
+        });
+
+      if (error) {
+        console.error('Error updating score:', error);
+      }
     }
     setIsRoundActive(false);
   };
 
-  const handleRegister = (name: string) => {
+  const handleRegister = async (name: string) => {
     setUsername(name);
-    // Load existing score from localStorage
-    const savedScore = localStorage.getItem(`score_${name}`);
-    if (savedScore) {
-      setScore(parseInt(savedScore));
+    
+    // Get existing score from Supabase
+    const { data, error } = await supabase
+      .from('scores')
+      .select('score')
+      .eq('username', name)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      console.error('Error fetching score:', error);
+    } else if (data) {
+      setScore(data.score);
     }
   };
 
@@ -96,14 +118,8 @@ const Game: React.FC<GameProps> = ({ isHost }) => {
     return () => clearInterval(timer);
   }, [isRoundActive, timeLeft]);
 
-  if (!username) {
-    return <UserRegistration onRegister={handleRegister} />;
-  }
-
   return (
     <GameContainer>
-      <ScoreDisplay username={username} score={score} />
-      
       <Typography variant="h4" gutterBottom align="center">
         Country Outline Game
       </Typography>
