@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Grid, Button, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CountryOutline from './CountryOutline';
+import UserRegistration from './UserRegistration';
+import ScoreDisplay from './ScoreDisplay';
 
 const GameContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -33,6 +35,8 @@ const Game: React.FC<GameProps> = ({ isHost }) => {
   const [options, setOptions] = useState<Country[]>([]);
   const [timeLeft, setTimeLeft] = useState<number>(30);
   const [isRoundActive, setIsRoundActive] = useState<boolean>(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const [score, setScore] = useState<number>(0);
 
   // Country data
   const countries: Country[] = [
@@ -63,9 +67,21 @@ const Game: React.FC<GameProps> = ({ isHost }) => {
     if (!isRoundActive) return;
     
     const isCorrect = option.name === currentCountry?.name;
-    // Here we would send the result to the server
-    console.log(`Selected ${option.name}, correct: ${isCorrect}`);
+    if (isCorrect) {
+      setScore(prev => prev + 1);
+      // Save score to localStorage
+      localStorage.setItem(`score_${username}`, (score + 1).toString());
+    }
     setIsRoundActive(false);
+  };
+
+  const handleRegister = (name: string) => {
+    setUsername(name);
+    // Load existing score from localStorage
+    const savedScore = localStorage.getItem(`score_${name}`);
+    if (savedScore) {
+      setScore(parseInt(savedScore));
+    }
   };
 
   useEffect(() => {
@@ -80,8 +96,14 @@ const Game: React.FC<GameProps> = ({ isHost }) => {
     return () => clearInterval(timer);
   }, [isRoundActive, timeLeft]);
 
+  if (!username) {
+    return <UserRegistration onRegister={handleRegister} />;
+  }
+
   return (
     <GameContainer>
+      <ScoreDisplay username={username} score={score} />
+      
       <Typography variant="h4" gutterBottom align="center">
         Country Outline Game
       </Typography>
