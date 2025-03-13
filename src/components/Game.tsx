@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Grid, Button, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CountryOutline from './CountryOutline';
-import UserRegistration from './UserRegistration';
-import ScoreDisplay from './ScoreDisplay';
-import { supabase, Score } from '../lib/supabase';
+import UserRegistration from './UserRegistration.tsx';
+import ScoreDisplay from './ScoreDisplay.tsx';
+import { supabase } from '../lib/supabase';
 
 const GameContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
